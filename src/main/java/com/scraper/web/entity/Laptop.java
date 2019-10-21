@@ -16,7 +16,7 @@ public class Laptop extends GeneralItem {
     private String screenDiagonal;
 
     @Column(name = "amount_of_ram")
-    private String mountOfRam;
+    private String amountOfRam;
 
     @Column(name = "operating_system")
     private String operatingSystem;

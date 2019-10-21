@@ -23,4 +23,7 @@ CREATE TABLE IF NOT EXISTS category(
   supplied_with VARCHAR(255),
   brand_registration_country VARCHAR(255),
   guarantee VARCHAR(255),
-  additional_warranty_conditions VARCHAR(255));
+  additional_warranty_conditions VARCHAR(255)),
+  url VARCHAR(500),
+  name VARCHAR(500),
+  price BIGINT;

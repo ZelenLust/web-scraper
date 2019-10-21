@@ -13,7 +13,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 @Service
 @RequiredArgsConstructor
@@ -51,8 +55,18 @@ public class RozetkaScrappingServiceImpl implements RozetkaScrappingService {
     }
     private Laptop scrapeLaptopsInfo(String laptopPageUrl) {
         try {
-            Document laptopPage = Jsoup.connect(laptopPageUrl).get();
             Laptop laptop = new Laptop();
+
+            Document laptopPage = Jsoup.connect(laptopPageUrl + "/characteristics/").get();
+            Elements nameElement = laptopPage.getElementsByClass("product-tabs__heading_color_gray");
+            laptop.setName( nameElement.get(0).text());
+
+            Elements characteristicElements = laptopPage.getElementsByClass("product-characteristics-list");
+            Map<String, String> characteristics = convertCharacteristicsToMap(characteristicElements);
+
+            for (String key : characteristics.keySet()) {
+
+            }
 
 
         } catch (IOException e) {
@@ -60,6 +74,46 @@ public class RozetkaScrappingServiceImpl implements RozetkaScrappingService {
         }
 
         return null;
+    }
+
+    enum Characteristic {
+        SCREEN_DIAGONAL(s -> s.equals("Діагональ екрана"), (value, laptop) ->
+                laptop.setScreenDiagonal(value)),
+        PROCESSOR(s -> s.equals("Процесор"), (value, laptop) ->
+                laptop.setProcessor(value)),
+        AMOUNT_OF_RAM(s -> s.equals("Обсяг оперативної пам'яті"), (value, laptop) ->
+                laptop.setAmountOfRam(value)),
+        SHORT_CHARACTERISTICS(s -> s.equals("Короткі характеристики"), (value, laptop) ->
+                laptop.setShortCharacteristics(value)),
+        OS(s -> s.equals("Операційна система"), (value, laptop) ->
+                laptop.setOperatingSystem(value)),
+        COLOR(s -> s.equals("Колір"), (value, laptop) ->
+                laptop.setColor(value));
+
+        private final Predicate<String> predicate;
+        private final BiConsumer<String, Laptop> processingFunction;
+        Characteristic(Predicate<String> predicate, BiConsumer<String, Laptop> processingFunction) {
+            this.predicate = predicate;
+            this.processingFunction = processingFunction;
+        }
+        public Predicate<String> getPredicate() {
+            return predicate;
+        }
+        public BiConsumer<String, Laptop> getProcessingFunction() {
+            return processingFunction;
+        }
+    }
+
+    private Map<String, String> convertCharacteristicsToMap(Elements characteristics) {
+        Map<String, String> result = new HashMap<>();
+
+        for (int i = 0; i < characteristics.size(); i++) {
+            String name = characteristics.get(i).text();
+            String value = characteristics.get(++i).text();
+            result.put(name, value);
+        }
+
+        return result;
     }
 
     private boolean isNumeric(String pageNumber) {
