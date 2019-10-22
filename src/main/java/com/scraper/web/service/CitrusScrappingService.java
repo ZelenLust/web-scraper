@@ -1,6 +1,6 @@
 package com.scraper.web.service;
 
-public interface RozetkaScrappingService {
+public interface CitrusScrappingService {
 
     void scrapeLaptops();
 

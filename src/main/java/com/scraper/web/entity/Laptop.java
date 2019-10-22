@@ -1,10 +1,13 @@
 package com.scraper.web.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "laptop")
 public class Laptop extends GeneralItem {
@@ -18,63 +21,21 @@ public class Laptop extends GeneralItem {
     @Column(name = "amount_of_ram")
     private String amountOfRam;
 
-    @Column(name = "operating_system")
-    private String operatingSystem;
+    @Column(name = "amount_of_cores")
+    private String amountOfCores;
 
-    @Column(name = "short_characteristics")
-    private String shortCharacteristics;
+    @Column(name = "hdd")
+    private String hdd;
 
-    @Column(name = "keyboard")
-    private String keyboard;
+    @Column(name = "ssd")
+    private String ssd;
 
-    @Column(name = "color")
-    private String color;
+    @Column(name = "url")
+    private String url;
 
-    @Column(name = "storage_volume")
-    private String storageVolume;
+    @Column(name = "code")
+    private String code;
 
-    @Column(name = "optical_drive")
-    private String opticalDrive;
-
-    @Column(name = "slots_for_ram")
-    private String numberOfSlotsForRam;
-
-    @Column(name = "battery")
-    private String battery;
-
-    @Column(name = "screen_refresh_rate")
-    private String screenRefreshRate;
-
-    @Column(name = "type_of_ram")
-    private String typeOfRam;
-
-    @Column(name = "additional_features")
-    private String additionalFeatures;
-
-    @Column(name = "graphic_adapter")
-    private String graphicAdapter;
-
-    @Column(name = "network_adapters")
-    private String networkAdapters;
-
-    @Column(name = "connectors_and_ports")
-    private String connectorsAndPorts;
-
-    @Column(name = "battery_specifications")
-    private String batterySpecifications;
-
-    @Column(name = "dimensions")
-    private String dimensions;
-
-    @Column(name = "supplied_with")
-    private String suppliedWith;
-
-    @Column(name = "brand_registration_country")
-    private String brandRegistrationCountry;
-
-    @Column(name = "guarantee")
-    private String guarantee;
-
-    @Column(name = "additional_warranty_conditions")
-    private String additionalWarrantyConditions;
+    @OneToMany(fetch = FetchType.LAZY)
+    private List<LaptopPrice> prices;
 }

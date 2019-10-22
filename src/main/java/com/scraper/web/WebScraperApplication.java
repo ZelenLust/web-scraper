@@ -1,6 +1,6 @@
 package com.scraper.web;
 
-import com.scraper.web.service.implementation.RozetkaScrappingServiceImpl;
+import com.scraper.web.service.implementation.CitrusScrappingServiceImpl;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -12,7 +12,7 @@ public class WebScraperApplication {
 		ConfigurableApplicationContext applicationContext =
 				SpringApplication.run(WebScraperApplication.class, args);
 
-		applicationContext.getBean(RozetkaScrappingServiceImpl.class).scrapeLaptops();
+		applicationContext.getBean(CitrusScrappingServiceImpl.class).scrapeLaptops();
 	}
 
 }
