@@ -22,7 +22,7 @@ public class Laptop extends GeneralItem {
     private String amountOfRam;
 
     @Column(name = "amount_of_cores")
-    private String amountOfCores;
+    private Short amountOfCores;
 
     @Column(name = "hdd")
     private String hdd;
@@ -36,6 +36,4 @@ public class Laptop extends GeneralItem {
     @Column(name = "code")
     private String code;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    private List<LaptopPrice> prices;
 }

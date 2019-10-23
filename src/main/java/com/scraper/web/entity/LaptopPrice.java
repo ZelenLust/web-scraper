@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 
@@ -19,7 +20,7 @@ public class LaptopPrice {
     private Long id;
 
     @Column(name = "price")
-    private BigInteger price;
+    private Long price;
 
     @Column(name = "date")
     private LocalDate date;
@@ -27,7 +28,7 @@ public class LaptopPrice {
     @Column(name ="currency")
     private String currency;
 
-    @ManyToOne
-    private Laptop laptop;
+    @Column(name ="laptop_code")
+    private String laptopCode;
 
 }
