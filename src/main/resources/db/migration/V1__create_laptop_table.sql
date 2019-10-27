@@ -7,5 +7,5 @@ amount_of_cores SMALLINT(3),
 hdd VARCHAR(25),
 ssd VARCHAR(25),
 url VARCHAR(1000),
-code VARCHAR(150) NOT NULL UNIQUE,
+code VARCHAR(150) UNIQUE,
 name VARCHAR(500));

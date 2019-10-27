@@ -4,13 +4,19 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
-import java.util.List;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "laptop")
-public class Laptop extends GeneralItem {
+public class Laptop {
+
+    @Id
+    @EqualsAndHashCode.Exclude
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id = 0L;
+
+    @Column(name = "name")
+    private String name;
 
     @Column(name = "processor")
     private String processor;

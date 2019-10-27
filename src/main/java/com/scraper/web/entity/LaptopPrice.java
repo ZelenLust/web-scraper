@@ -1,8 +1,6 @@
 package com.scraper.web.entity;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -12,6 +10,8 @@ import java.time.LocalDate;
 @Data
 @Builder
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "laptop_price")
 public class LaptopPrice {
 

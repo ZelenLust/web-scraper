@@ -8,6 +8,8 @@ import com.scraper.web.service.CitrusScrappingService;
 import com.scraper.web.util.EntityWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,8 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +40,8 @@ public class CitrusScrappingServiceImpl implements CitrusScrappingService {
     @Value("${citrus.laptops.default.url}")
     private String laptopsDefaultUrl;
 
+    private Logger logger = LogManager.getLogger(CitrusScrappingService.class);
+
     private final LaptopRepository laptopRepository;
 
     private final LaptopPriceRepository laptopPriceRepository;
@@ -47,7 +49,7 @@ public class CitrusScrappingServiceImpl implements CitrusScrappingService {
     @Override
     public void scrapeLaptops() {
         try {
-            log.debug("Started scraping laptops from: {}", laptopsUrl);
+            logger.debug("Started scraping laptops from: {}", laptopsUrl);
             Document firstPage = Jsoup.connect(String.format(laptopsUrl, 1)).get();
             Elements paginationContainer = firstPage.getElementsByClass("pagination-container");
             Elements pageNumbers = paginationContainer.get(0).getElementsByTag("a");
@@ -59,12 +61,13 @@ public class CitrusScrappingServiceImpl implements CitrusScrappingService {
             List<Laptop> existentLaptops = laptopRepository.findAll();
 
             for (int i = 1; i < lastPage; i++) {
+                logger.debug("Page #{}", i);
                 final Document page = Jsoup.connect(String.format(laptopsUrl, i)).get();
 
                 // get all laptop references from page
                 Elements pageLaptops = page.getElementsByClass("product-card__name");
                 pageLaptops.stream().map(e -> e.getElementsByTag("a").get(0))
-                        .forEach(e -> scrapedLaptops.add(scrapeLaptopsInfo(e.attr("href"))));
+                        .forEach(e -> scrapeLaptopsInfo(e.attr("href"), scrapedLaptops));
             }
 
             Map<String, List<Laptop>> laptopsByCode = Stream.concat(scrapedLaptops.stream(), existentLaptops.stream())
@@ -74,34 +77,19 @@ public class CitrusScrappingServiceImpl implements CitrusScrappingService {
                     .stream().collect(Collectors.groupingBy(EntityWrapper::getState));
 
             List<Laptop> laptopsToSave = new ArrayList<>();
-            for (EntityWrapper<Laptop> wrapper : entityWrappers.get(EntityWrapper.State.UPDATE)) {
-                Laptop scrapedEntity = wrapper.getScrapedEntity();
-                Laptop existentEntity = wrapper.getExistentEntity();
-
-                existentEntity.setHdd(scrapedEntity.getHdd());
-                existentEntity.setSsd(scrapedEntity.getSsd());
-                existentEntity.setAmountOfCores(scrapedEntity.getAmountOfCores());
-                existentEntity.setAmountOfRam(scrapedEntity.getAmountOfRam());
-                existentEntity.setUrl(scrapedEntity.getUrl());
-                existentEntity.setScreenDiagonal(scrapedEntity.getScreenDiagonal());
-                existentEntity.setProcessor(scrapedEntity.getProcessor());
-
-                laptopsToSave.add(existentEntity);
-            }
-            for (EntityWrapper<Laptop> wrapper : entityWrappers.get(EntityWrapper.State.CREATE)) {
-                laptopsToSave.add(wrapper.getScrapedEntity());
-            }
+            proceedEntitiesByStatuses(entityWrappers, laptopsToSave);
 
             laptopRepository.saveAll(laptopsToSave);
-            log.debug("Finished scraping of laptops");
+            logger.debug("Finished scraping of laptops");
         } catch (IOException e) {
-            log.error("An error occurred, URL: {}", laptopsUrl);
+            logger.error("An error occurred, URL: {}", laptopsUrl);
         }
 
     }
-    private Laptop scrapeLaptopsInfo(String laptopPageIdentifier) {
+    private void scrapeLaptopsInfo(String laptopPageIdentifier, List<Laptop> allLaptops) {
         String laptopPageUrl = laptopsDefaultUrl + laptopPageIdentifier;
         try {
+            logger.debug("Scrapping laptop from: {}", laptopPageUrl);
             Laptop laptop = new Laptop();
             Document laptopPage = Jsoup.connect(laptopPageUrl).get();
 
@@ -123,14 +111,12 @@ public class CitrusScrappingServiceImpl implements CitrusScrappingService {
             laptopPriceRepository.save(LaptopPrice.builder().date(LocalDate.now()).laptopCode(laptop.getCode())
                     .price(Long.valueOf(price)).build());
 
-            return laptop;
+            allLaptops.add(laptop);
         } catch (IOException e) {
-            log.error("An error occurred, URL: {}", laptopPageUrl);
+            logger.error("An error occurred, URL: {}", laptopPageUrl);
         } catch (IndexOutOfBoundsException e) {
-            log.error("An error occurred, exception with HTML on page: {}", laptopPageUrl);
+            logger.error("An error occurred, exception with HTML on page: {}", laptopPageUrl);
         }
-        // throw new RuntimeException(String.format("Unable to scrape laptop from page: %s", laptopPageUrl));
-        return null;
     }
 
     private String extractCodeFromName(String name) {
@@ -208,6 +194,31 @@ public class CitrusScrappingServiceImpl implements CitrusScrappingService {
         }
         public BiConsumer<String, Laptop> getProcessingFunction() {
             return processingFunction;
+        }
+    }
+
+    private void proceedEntitiesByStatuses(Map<EntityWrapper.State, List<EntityWrapper<Laptop>>> entityWrappers,
+                                           List<Laptop> laptopsToSave) {
+        if (entityWrappers.get(EntityWrapper.State.UPDATE) != null) {
+            for (EntityWrapper<Laptop> wrapper : entityWrappers.get(EntityWrapper.State.UPDATE)) {
+                Laptop scrapedEntity = wrapper.getScrapedEntity();
+                Laptop existentEntity = wrapper.getExistentEntity();
+
+                existentEntity.setHdd(scrapedEntity.getHdd());
+                existentEntity.setSsd(scrapedEntity.getSsd());
+                existentEntity.setAmountOfCores(scrapedEntity.getAmountOfCores());
+                existentEntity.setAmountOfRam(scrapedEntity.getAmountOfRam());
+                existentEntity.setUrl(scrapedEntity.getUrl());
+                existentEntity.setScreenDiagonal(scrapedEntity.getScreenDiagonal());
+                existentEntity.setProcessor(scrapedEntity.getProcessor());
+
+                laptopsToSave.add(existentEntity);
+            }
+            if (entityWrappers.get(EntityWrapper.State.CREATE) != null) {
+                for (EntityWrapper<Laptop> wrapper : entityWrappers.get(EntityWrapper.State.CREATE)) {
+                    laptopsToSave.add(wrapper.getScrapedEntity());
+                }
+            }
         }
     }
 
